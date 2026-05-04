@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🎨 Color Match Master</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(145deg, #0f0f1a, #1a1a2e);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #f0f0f8;
+            padding: 20px;
+        }
+        .app {
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(12px);
+            border-radius: 40px;
+            padding: 32px 28px 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            text-align: center;
+            background: linear-gradient(135deg, #f7d06b, #f39c3b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        h2 {
+            font-size: 1.4rem;
+            text-align: center;
+            margin-bottom: 16px;
+            color: #b0b8d0;
+        }
+        .subtitle {
+            text-align: center;
+            color: #8890b0;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .screen {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .screen.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(12px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .btn {
+            padding: 14px 34px;
+            border: none;
+            border-radius: 60px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #f0f0f8;
+            background: rgba(255,255,255,0.06);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+        .btn-primary {
+            background: linear-gradient(135deg, #f7d06b, #e8822a);
+            color: #0f0f1a;
+            border: none;
+            box-shadow: 0 6px 24px rgba(247,208,107,0.25);
+        }
+        .btn-primary:hover { box-shadow: 0 10px 40px rgba(247,208,107,0.35); }
+        .btn-secondary {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+        .btn-sm { padding: 10px 22px; font-size: 0.9rem; }
+        .selector-grid {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 18px 0;
+        }
+        .diff-easy { border-left: 4px solid #2ecc71; }
+        .diff-medium { border-left: 4px solid #f1c40f; }
+        .diff-hard { border-left: 4px solid #e74c3c; }
+        .game-layout { display: flex; flex-direction: column; gap: 20px; align-items: center; }
+        .timer-ring {
+            font-size: 3rem;
+            font-weight: 700;
+            min-width: 100px;
+            text-align: center;
+            padding: 8px 24px;
+            border-radius: 60px;
+            border: 2px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.4);
+        }
+        .timer-ring.warning { color: #f1c40f; border-color: #f1c40f; }
+        .timer-ring.danger { color: #e74c3c; border-color: #e74c3c; animation: pulse 0.6s infinite alternate; }
+        @keyframes pulse { 0% { box-shadow: 0 0 10px rgba(231,76,60,0.2); } 100% { box-shadow: 0 0 40px rgba(231,76,60,0.5); } }
+        .auto-submit-timer {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #f1c40f;
+            background: rgba(0,0,0,0.3);
+            padding: 8px 24px;
+            border-radius: 40px;
+            border: 2px solid #f1c40f;
+            display: inline-block;
+            margin-top: -8px;
+        }
+        .target-swatch {
+            width: 200px;
+            height: 200px;
+            border-radius: 28px;
+            border: 3px solid rgba(255,255,255,0.15);
+            box-shadow: 0 12px 48px rgba(0,0,0,0.6);
+            transition: background 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .target-swatch.hidden-state { background: #1e1e32 !important; border-color: rgba(255,255,255,0.05); }
+        .target-swatch .overlay-text { font-size: 1.6rem; font-weight: 600; color: rgba(255,255,255,0.15); user-select: none; }
+        .players-container {
+            width: 100%;
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .player-card {
+            flex: 1 1 280px;
+            max-width: 420px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 24px;
+            padding: 20px 22px 26px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .player-card.p1 { border-top: 3px solid #5dade2; }
+        .player-card.p2 { border-top: 3px solid #ec7063; }
+        .player-card .player-label { font-size: 1.1rem; font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+        .player-card .player-label .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; }
+        .p1 .dot { background: #5dade2; }
+        .p2 .dot { background: #ec7063; }
+        .slider-group { margin-bottom: 8px; }
+        .slider-group label { display: flex; justify-content: space-between; font-size: 0.85rem; color: #b0b8d0; }
+        .slider-group label span.value { font-weight: 700; color: #f0f0f8; min-width: 36px; text-align: right; }
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255,255,255,0.12);
+            border-radius: 10px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #f0f0f8;
+            cursor: pointer;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #f0f0f8;
+            cursor: pointer;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        .player-color-preview {
+            width: 100%;
+            height: 44px;
+            border-radius: 12px;
+            margin-top: 10px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .result-grid { display: flex; flex-direction: column; gap: 20px; align-items: center; }
+        .result-score-box {
+            background: rgba(255,255,255,0.03);
+            border-radius: 32px;
+            padding: 28px 40px;
+            text-align: center;
+            min-width: 260px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .result-score-box .score-display {
+            font-size: 4.5rem;
+            font-weight: 800;
+            margin: 8px 0;
+            background: linear-gradient(135deg, #f7d06b, #f39c3b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .result-score-box .rating-label {
+            font-size: 1.3rem;
+            font-weight: 600;
+            padding: 6px 24px;
+            border-radius: 40px;
+            display: inline-block;
+            margin: 8px 0;
+            background: rgba(255,255,255,0.06);
+        }
+        .result-score-box .color-master-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #f1c40f, #f39c3b);
+            color: #0f0f1a;
+            font-weight: 700;
+            padding: 8px 28px;
+            border-radius: 40px;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 24px rgba(241,196,15,0.3);
+            margin-top: 10px;
+            font-size: 1.1rem;
+        }
+        .result-score-box .vs-row {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 16px 0;
+            align-items: center;
+        }
+        .result-score-box .mini-swatch {
+            width: 70px;
+            height: 70px;
+            border-radius: 18px;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        .result-score-box .vs-text { font-size: 1.2rem; font-weight: 700; color: #8890b0; }
+        .result-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a2e;
+            color: #f0f0f8;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-size: 1rem;
+            font-weight: 500;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; }
+        @media (max-width: 700px) {
+            .app { padding: 20px 14px; }
+            h1 { font-size: 1.6rem; }
+            .target-swatch { width: 140px; height: 140px; }
+            .timer-ring { font-size: 2.2rem; min-width: 80px; }
+            .player-card { flex: 1 1 100%; max-width: 100%; }
+            .result-score-box .score-display { font-size: 3rem; }
+        }
+        .mt-16 { margin-top: 16px; }
+        .text-center { text-align: center; }
+    </style>
+</head>
+<body>
+<div class="app">
+    <h1>🎨 Color Match Master</h1>
+    <div class="subtitle">Study · Recreate · Get rated</div>
+
+    <!-- MODE SELECT -->
+    <div class="screen active" id="screen-mode">
+        <h2>🎮 Select Game Mode</h2>
+        <div class="selector-grid">
+            <button class="btn btn-primary" id="mode-1p">🧑 1 Player</button>
+            <button class="btn btn-primary" id="mode-2p">👥 2 Players</button>
+        </div>
+    </div>
+
+    <!-- DIFFICULTY SELECT -->
+    <div class="screen" id="screen-difficulty">
+        <h2>⚡ Choose Difficulty</h2>
+        <div class="selector-grid">
+            <button class="btn btn-secondary diff-easy" data-diff="easy">🟢 Easy (10s)</button>
+            <button class="btn btn-secondary diff-medium" data-diff="medium">🟡 Medium (5s)</button>
+            <button class="btn btn-secondary diff-hard" data-diff="hard">🔴 Hard (3s)</button>
+        </div>
+        <div class="text-center mt-16">
+            <button class="btn btn-sm" id="back-to-mode">← Back</button>
+        </div>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div class="screen" id="screen-game">
+        <div class="game-layout">
+            <div class="timer-ring" id="timerDisplay">10</div>
+            <div id="autoSubmitTimer" class="auto-submit-timer" style="display: none;">⏰ Auto-submit in 5s</div>
+            <div class="target-swatch" id="targetSwatch"><span class="overlay-text">?</span></div>
+            <div id="playersArea" class="players-container"></div>
+        </div>
+    </div>
+
+    <!-- RESULT SCREEN (score + New Game / Share Score / Home) -->
+    <div class="screen" id="screen-result">
+        <div id="resultContent" class="result-grid"></div>
+        <div class="result-actions">
+            <button class="btn btn-primary" id="newGameBtn">🔄 New Game</button>
+            <button class="btn btn-secondary" id="shareScoreBtn">📤 Share Score</button>
+            <button class="btn btn-secondary" id="homeBtn">🏠 Home</button>
+        </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast">Score copied!</div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    // DOM refs
+    const screens = {
+        mode: document.getElementById('screen-mode'),
+        difficulty: document.getElementById('screen-difficulty'),
+        game: document.getElementById('screen-game'),
+        result: document.getElementById('screen-result'),
+    };
+    const timerDisplay = document.getElementById('timerDisplay');
+    const autoSubmitTimerEl = document.getElementById('autoSubmitTimer');
+    const targetSwatch = document.getElementById('targetSwatch');
+    const playersArea = document.getElementById('playersArea');
+    const resultContent = document.getElementById('resultContent');
+    const newGameBtn = document.getElementById('newGameBtn');
+    const shareScoreBtn = document.getElementById('shareScoreBtn');
+    const homeBtn = document.getElementById('homeBtn');
+    const backToModeBtn = document.getElementById('back-to-mode');
+    const mode1p = document.getElementById('mode-1p');
+    const mode2p = document.getElementById('mode-2p');
+    const diffButtons = document.querySelectorAll('[data-diff]');
+    const toast = document.getElementById('toast');
+
+    let gameMode = null;
+    let difficulty = null;
+    let targetColor = { r: 0, g: 0, b: 0 };
+    let timerInterval = null;
+    let autoSubmitInterval = null;
+    let autoSubmitCountdown = 5;
+    let lastScore = 0;
+    let lastRating = '';
+
+    function showScreen(id) {
+        Object.keys(screens).forEach(key => {
+            screens[key].classList.remove('active');
+        });
+        screens[id].classList.add('active');
+    }
+
+    function getTimeForDifficulty(diff) {
+        if (diff === 'easy') return 10;
+        if (diff === 'medium') return 5;
+        if (diff === 'hard') return 3;
+        return 10;
+    }
+
+    function randomColor() {
+        return {
+            r: Math.floor(Math.random() * 256),
+            g: Math.floor(Math.random() * 256),
+            b: Math.floor(Math.random() * 256)
+        };
+    }
+
+    function buildPlayerCards(count) {
+        playersArea.innerHTML = '';
+        for (let i = 1; i <= count; i++) {
+            const card = document.createElement('div');
+            card.className = `player-card p${i}`;
+            card.dataset.player = i;
+            card.innerHTML = `
+                <div class="player-label">
+                    <span class="dot"></span> Player ${i}
+                </div>
+                <div class="slider-group">
+                    <label>R <span class="value" id="rVal${i}">128</span></label>
+                    <input type="range" min="0" max="255" value="128" class="slider-r" data-player="${i}" data-color="r">
+                </div>
+                <div class="slider-group">
+                    <label>G <span class="value" id="gVal${i}">128</span></label>
+                    <input type="range" min="0" max="255" value="128" class="slider-g" data-player="${i}" data-color="g">
+                </div>
+                <div class="slider-group">
+                    <label>B <span class="value" id="bVal${i}">128</span></label>
+                    <input type="range" min="0" max="255" value="128" class="slider-b" data-player="${i}" data-color="b">
+                </div>
+                <div class="player-color-preview" id="preview${i}" style="background: rgb(128,128,128);"></div>
+            `;
+            playersArea.appendChild(card);
+        }
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            slider.addEventListener('input', updatePreview);
+        });
+        updateAllPreviews();
+    }
+
+    function updatePreview(e) {
+        const slider = e.target;
+        const player = slider.dataset.player;
+        const color = slider.dataset.color;
+        const val = slider.value;
+        const labelSpan = document.getElementById(`${color}Val${player}`);
+        if (labelSpan) labelSpan.textContent = val;
+        updatePlayerPreview(player);
+    }
+
+    function updatePlayerPreview(player) {
+        const r = parseInt(document.querySelector(`input[data-player="${player}"][data-color="r"]`).value) || 0;
+        const g = parseInt(document.querySelector(`input[data-player="${player}"][data-color="g"]`).value) || 0;
+        const b = parseInt(document.querySelector(`input[data-player="${player}"][data-color="b"]`).value) || 0;
+        const preview = document.getElementById(`preview${player}`);
+        if (preview) preview.style.background = `rgb(${r},${g},${b})`;
+    }
+
+    function updateAllPreviews() {
+        const players = gameMode === '2p' ? 2 : 1;
+        for (let i = 1; i <= players; i++) {
+            updatePlayerPreview(i);
+        }
+    }
+
+    function getPlayerColor(player) {
+        const r = parseInt(document.querySelector(`input[data-player="${player}"][data-color="r"]`).value) || 0;
+        const g = parseInt(document.querySelector(`input[data-player="${player}"][data-color="g"]`).value) || 0;
+        const b = parseInt(document.querySelector(`input[data-player="${player}"][data-color="b"]`).value) || 0;
+        return { r, g, b };
+    }
+
+    function calcScore(target, guess) {
+        const dr = Math.abs(target.r - guess.r);
+        const dg = Math.abs(target.g - guess.g);
+        const db = Math.abs(target.b - guess.b);
+        const maxDiff = 255 * 3;
+        const totalDiff = dr + dg + db;
+        const raw = 1 - (totalDiff / maxDiff);
+        let score = Math.round((raw * 9 + 1) * 10) / 10;
+        if (score < 1) score = 1;
+        if (score > 10) score = 10;
+        return score;
+    }
+
+    function getRating(score) {
+        if (score >= 10) return 'Perfect';
+        if (score >= 8.5) return 'Excellent';
+        if (score >= 7) return 'Good';
+        if (score >= 4) return 'Average';
+        return 'Bad';
+    }
+
+    function showResult() {
+        clearInterval(timerInterval);
+        clearInterval(autoSubmitInterval);
+        autoSubmitTimerEl.style.display = 'none';
+
+        const players = gameMode === '2p' ? 2 : 1;
+        let html = '';
+
+        // Player 1 (always shown)
+        const guess1 = getPlayerColor(1);
+        const score1 = calcScore(targetColor, guess1);
+        const rating1 = getRating(score1);
+        lastScore = score1;
+        lastRating = rating1;
+        const isPerfect1 = score1 === 10;
+        html += `
+            <div class="result-score-box">
+                <h2 style="margin-bottom:4px;">${gameMode === '2p' ? 'Player 1' : '🎯 Your Score'}</h2>
+                <div class="vs-row">
+                    <div class="mini-swatch" style="background: rgb(${targetColor.r},${targetColor.g},${targetColor.b});"></div>
+                    <span class="vs-text">vs</span>
+                    <div class="mini-swatch" style="background: rgb(${guess1.r},${guess1.g},${guess1.b});"></div>
+                </div>
+                <div class="score-display">${score1.toFixed(1)}</div>
+                <div class="rating-label">${rating1}</div>
+                ${isPerfect1 ? '<div class="color-master-badge">👑 Color Master</div>' : ''}
+            </div>
+        `;
+
+        // Player 2 (if 2-player mode)
+        if (gameMode === '2p') {
+            const guess2 = getPlayerColor(2);
+            const score2 = calcScore(targetColor, guess2);
+            const rating2 = getRating(score2);
+            const isPerfect2 = score2 === 10;
+            html += `
+                <div class="result-score-box" style="margin-top:12px;">
+                    <h2 style="margin-bottom:4px;">Player 2</h2>
+                    <div class="vs-row">
+                        <div class="mini-swatch" style="background: rgb(${targetColor.r},${targetColor.g},${targetColor.b});"></div>
+                        <span class="vs-text">vs</span>
+                        <div class="mini-swatch" style="background: rgb(${guess2.r},${guess2.g},${guess2.b});"></div>
+                    </div>
+                    <div class="score-display">${score2.toFixed(1)}</div>
+                    <div class="rating-label">${rating2}</div>
+                    ${isPerfect2 ? '<div class="color-master-badge">👑 Color Master</div>' : ''}
+                </div>
+            `;
+        }
+
+        resultContent.innerHTML = html;
+        showScreen('result');
+    }
+
+    function startStudyTimer(seconds) {
+        clearInterval(timerInterval);
+        clearInterval(autoSubmitInterval);
+        autoSubmitTimerEl.style.display = 'none';
+        let timeRemaining = seconds;
+        timerDisplay.textContent = timeRemaining;
+        timerDisplay.className = 'timer-ring';
+
+        timerInterval = setInterval(() => {
+            timeRemaining--;
+            timerDisplay.textContent = timeRemaining;
+            if (timeRemaining <= 3 && timeRemaining > 0) {
+                timerDisplay.className = 'timer-ring danger';
+            } else if (timeRemaining <= 5) {
+                timerDisplay.className = 'timer-ring warning';
+            }
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                timerDisplay.textContent = '0';
+                timerDisplay.className = 'timer-ring danger';
+                targetSwatch.classList.add('hidden-state');
+                targetSwatch.style.background = '#1e1e32';
+                targetSwatch.querySelector('.overlay-text').textContent = '?';
+                startAutoSubmitCountdown();
+            }
+        }, 1000);
+    }
+
+    function startAutoSubmitCountdown() {
+        autoSubmitCountdown = 5;
+        autoSubmitTimerEl.style.display = 'inline-block';
+        autoSubmitTimerEl.textContent = `⏰ Auto-submit in ${autoSubmitCountdown}s`;
+        autoSubmitInterval = setInterval(() => {
+            autoSubmitCountdown--;
+            autoSubmitTimerEl.textContent = `⏰ Auto-submit in ${autoSubmitCountdown}s`;
+            if (autoSubmitCountdown <= 0) {
+                clearInterval(autoSubmitInterval);
+                autoSubmitInterval = null;
+                autoSubmitTimerEl.style.display = 'none';
+                showResult();
+            }
+        }, 1000);
+    }
+
+    function resetGame() {
+        clearInterval(timerInterval);
+        clearInterval(autoSubmitInterval);
+        autoSubmitTimerEl.style.display = 'none';
+        timerDisplay.textContent = '0';
+        timerDisplay.className = 'timer-ring';
+        targetSwatch.classList.remove('hidden-state');
+        targetSwatch.querySelector('.overlay-text').textContent = '?';
+    }
+
+    function startGame() {
+        if (!gameMode || !difficulty) return;
+        const time = getTimeForDifficulty(difficulty);
+        resetGame();
+        targetColor = randomColor();
+        targetSwatch.style.background = `rgb(${targetColor.r},${targetColor.g},${targetColor.b})`;
+        targetSwatch.classList.remove('hidden-state');
+        targetSwatch.querySelector('.overlay-text').textContent = '';
+        const count = (gameMode === '2p') ? 2 : 1;
+        buildPlayerCards(count);
+        timerDisplay.textContent = time;
+        startStudyTimer(time);
+        showScreen('game');
+    }
+
+    function shareScore() {
+        let text = `🎨 Color Match Master\n`;
+        if (gameMode === '2p') {
+            // For simplicity, share both scores
+            const guess1 = getPlayerColor(1);
+            const score1 = calcScore(targetColor, guess1);
+            const guess2 = getPlayerColor(2);
+            const score2 = calcScore(targetColor, guess2);
+            text += `Player 1: ${score1.toFixed(1)}/10\nPlayer 2: ${score2.toFixed(1)}/10\n`;
+        } else {
+            text += `Score: ${lastScore.toFixed(1)}/10\nRating: ${lastRating}\n`;
+        }
+        text += `Play now!`;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                toast.textContent = '✅ Score copied to clipboard!';
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2000);
+            }).catch(() => {
+                fallbackShare(text);
+            });
+        } else {
+            fallbackShare(text);
+        }
+    }
+
+    function fallbackShare(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        toast.textContent = '✅ Score copied!';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    // Event listeners
+    mode1p.addEventListener('click', function() {
+        gameMode = '1p';
+        showScreen('difficulty');
+    });
+    mode2p.addEventListener('click', function() {
+        gameMode = '2p';
+        showScreen('difficulty');
+    });
+    diffButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            difficulty = this.dataset.diff;
+            startGame();
+        });
+    });
+    backToModeBtn.addEventListener('click', function() {
+        resetGame();
+        showScreen('mode');
+    });
+    newGameBtn.addEventListener('click', function() {
+        resetGame();
+        if (difficulty) {
+            startGame();
+        } else {
+            showScreen('difficulty');
+        }
+    });
+    shareScoreBtn.addEventListener('click', shareScore);
+    homeBtn.addEventListener('click', function() {
+        resetGame();
+        gameMode = null;
+        difficulty = null;
+        showScreen('mode');
+    });
+
+    // Init
+    showScreen('mode');
+})();
+</script>
+</body>
+</html>
